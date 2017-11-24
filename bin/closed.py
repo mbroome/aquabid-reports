@@ -44,7 +44,7 @@ for line in lines:
                    'category': category,
                    'utc': time.mktime(utc.timetuple()),
                    'link': m.group(2).replace('&amp;', '&'),
-                   'item': m.group(3),
+                   'description': m.group(3),
                    'seller': m.group(4),
                    'closes': m.group(1),
                    'winner': m.group(5),

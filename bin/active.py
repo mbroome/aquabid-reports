@@ -14,8 +14,8 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 titlePattern = re.compile('<tr .*<b>(.*)<\/b.*tr>')
-itemPattern = re.compile('<tr .*?><td .*?>.*<a href=\"(http:\/\/.*?)\">(.*?)<\/a>.*?(<img .*>)<\/font></td><td .*?>.*?>(.*?)<\/font.*?</td><td .*?><font.*?>(.*?)<\/font.*></td><td .*?><font .*?>(.*?)<\/.*</td><td .*?><font.*?>(.*?)<img.*\/reserve_(.*)\.gif.*?</td><\/tr>')
-itemNoImagePattern = re.compile('<tr .*?><td .*?>.*<a href=\"(http:\/\/.*?)\">(.*?)<\/a>.*?<\/font></td><td .*?>.*?>(.*?)<\/font.*?</td><td .*?><font.*?>(.*?)<\/font.*></td><td .*?><font .*?>(.*?)<\/.*</td><td .*?><font.*?>(.*?)<img.*\/reserve_(.*)\.gif.*?</td><\/tr>')
+descriptionPattern = re.compile('<tr .*?><td .*?>.*<a href=\"(http:\/\/.*?)\">(.*?)<\/a>.*?(<img .*>)<\/font></td><td .*?>.*?>(.*?)<\/font.*?</td><td .*?><font.*?>(.*?)<\/font.*></td><td .*?><font .*?>(.*?)<\/.*</td><td .*?><font.*?>(.*?)<img.*\/reserve_(.*)\.gif.*?</td><\/tr>')
+descriptionNoImagePattern = re.compile('<tr .*?><td .*?>.*<a href=\"(http:\/\/.*?)\">(.*?)<\/a>.*?<\/font></td><td .*?>.*?>(.*?)<\/font.*?</td><td .*?><font.*?>(.*?)<\/font.*></td><td .*?><font .*?>(.*?)<\/.*</td><td .*?><font.*?>(.*?)<img.*\/reserve_(.*)\.gif.*?</td><\/tr>')
 
 content = open('active.html', 'r').read()
 section = ''
@@ -31,7 +31,7 @@ for line in content.split('\n'):
                 'id': '',
                 'section': section,
                 'link': '',
-                'item': '',
+                'description': '',
                 'pic': '',
                 'seller': '',
                 'closes': '',
@@ -47,10 +47,10 @@ for line in content.split('\n'):
          line = line.replace('&amp;', '&')
          line = line.replace('&nbsp;', ' ')
          line = line.replace('nbsp', ' ')
-         m = itemPattern.match(line)
+         m = descriptionPattern.match(line)
          if m:
             record['link'] = m.group(1)
-            record['item'] = m.group(2)
+            record['description'] = m.group(2)
             record['pic'] = m.group(3)
             record['seller'] = m.group(4)
             record['closes'] = m.group(5)
@@ -62,10 +62,10 @@ for line in content.split('\n'):
             if t:
                section = t.group(1)
             else:
-               i = itemNoImagePattern.match(line)
+               i = descriptionNoImagePattern.match(line)
                if i:
                   record['link'] = i.group(1)
-                  record['item'] = i.group(2)
+                  record['description'] = i.group(2)
                   record['seller'] = i.group(3)
                   record['closes'] = i.group(4)
                   record['bids'] = i.group(5)
@@ -76,7 +76,7 @@ for line in content.split('\n'):
                   if '<tbody>' not in line:
                      print 'XXXX: %s' % line
 
-         if record['item']:
+         if record['description']:
             # sanatize the data since it's all over the place
             id = record['link'][record['link'].find('?') + 1:]
             id = id[id.find('&') + 1:]

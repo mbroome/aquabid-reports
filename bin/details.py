@@ -18,7 +18,7 @@ rowPattern = re.compile('.*auction\.cgi.*?>(.*?)<\/a.*?<td.*?<td.*?font.*?>(.*?)
 content = open('details.html', 'r').read()
 
 details = {
-           'item': '',
+           'description': '',
            'category': '',
            'reserve': '',
            'bids': []
@@ -55,7 +55,7 @@ for line in content.split('\n'):
       value = line[line.find('value="') + 7:]
       value = value[:value.find('"')]
       if 'ITEM' in line:
-         details['item'] = value
+         details['description'] = value
       elif 'CATEGORY' in line:
          details['category'] = value
 
