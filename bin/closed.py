@@ -17,7 +17,7 @@ content = content[:len(content) - 5]
 
 lines = content.split('</tr><tr')
 
-output = []
+closedList = []
 for line in lines:
    if 'Bid Price' not in line:
 
@@ -48,6 +48,6 @@ for line in lines:
             pass
 
          #pp.pprint(record)
-         output.append(record)
+         closedList.append(record)
 
-print json.dumps(output)
+print json.dumps(closedList)

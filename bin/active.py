@@ -14,7 +14,8 @@ content = open('active.html', 'r').read()
 section = ''
 found = False
 
-output = []
+activeList = []
+bidList = []
 for line in content.split('\n'):
    if '<tbody>' in line and 'Item' in line:
       found = True
@@ -102,7 +103,14 @@ for line in content.split('\n'):
                pass
 
             #pp.pprint(record)
-            output.append(record)
+            activeList.append(record)
+            try:
+               bidCount = int(record['bids'])
+               #print bidCount
+               if bidCount > 0:
+                  bidList.append(record)
+            except:
+               pass
 
-print json.dumps(output)
-
+print json.dumps(activeList)
+#print json.dumps(bidList)
