@@ -31,16 +31,19 @@ for line in lines:
       m = rowPattern.match(line)
       if m:
          id = m.group(2)
-         id = id[id.find('?view_closed_item&amp;') + 23:]
+         id = id[id.find('?view_closed_item&amp;') + 22:]
+         #print id
          i = re.search('\d', id)
          if i:
+            category = id[:i.start()]
             id = id[i.start():]
             unixtime, utc = timetools.parseTimestamp(id)
 
          record = {
                    'id': unixtime,
+                   'category': category,
                    'utc': time.mktime(utc.timetuple()),
-                   'link': m.group(2),
+                   'link': m.group(2).replace('&amp;', '&'),
                    'item': m.group(3),
                    'seller': m.group(4),
                    'closes': m.group(1),

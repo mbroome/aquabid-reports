@@ -80,9 +80,13 @@ for line in content.split('\n'):
             # sanatize the data since it's all over the place
             id = record['link'][record['link'].find('?') + 1:]
             id = id[id.find('&') + 1:]
+            category = record['link'][record['link'].find('?') + 1:]
+            category = category[:category.find('&')]
+
             unixtime, utc = timetools.parseTimestamp(id)
             record['utc'] = time.mktime(utc.timetuple())
             record['id'] = unixtime
+            record['category'] = category
 
             if 'buyitnow' in record['bids']:
                record['bids'] = 'buyitnow'
