@@ -3,6 +3,13 @@ import os
 import sys
 import re
 import json
+import time
+
+scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
+sys.path.append(scriptPath + '/../lib')
+
+import timetools
+
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -73,7 +80,9 @@ for line in content.split('\n'):
             # sanatize the data since it's all over the place
             id = record['link'][record['link'].find('?') + 1:]
             id = id[id.find('&') + 1:]
-            record['id'] = id
+            unixtime, utc = timetools.parseTimestamp(id)
+            record['utc'] = time.mktime(utc.timetuple())
+            record['id'] = unixtime
 
             if 'buyitnow' in record['bids']:
                record['bids'] = 'buyitnow'

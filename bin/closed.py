@@ -3,6 +3,13 @@ import os
 import sys
 import re
 import json
+import time
+
+scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
+sys.path.append(scriptPath + '/../lib')
+
+import timetools
+
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -28,8 +35,11 @@ for line in lines:
          i = re.search('\d', id)
          if i:
             id = id[i.start():]
+            unixtime, utc = timetools.parseTimestamp(id)
+
          record = {
-                   'id': id,
+                   'id': unixtime,
+                   'utc': time.mktime(utc.timetuple()),
                    'link': m.group(2),
                    'item': m.group(3),
                    'seller': m.group(4),

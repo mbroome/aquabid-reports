@@ -4,20 +4,14 @@ import sys
 import re
 import json
 import time
-import pytz
-import dateutil
-import dateutil.parser
+
+scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
+sys.path.append(scriptPath + '/../lib')
+
+import timetools
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
-
-TZINFOS = {
-    'CDT': pytz.timezone('US/Central'),
-    # ... add more to handle other timezones
-    # (I wish pytz had a list of common abbreviations)
-}
-
-to_zone = dateutil.tz.tzlocal()
 
 rowPattern = re.compile('.*auction\.cgi.*?>(.*?)<\/a.*?<td.*?<td.*?font.*?>(.*?)<\/font.*?<td.*?<td.*?font.*?>(.*?)<\/font.*<td>.*?>(.*?)<\/font.*')
 
@@ -46,27 +40,10 @@ for line in content.split('\n'):
                       'price': m.group(3),
                       'comment': m.group(4)
                      }
-            # dates suck to parse
-            record['bidtime'] = record['bidtime'].replace(' - ', ' ')
-            parts = record['bidtime'].split(' ')
-            # from = Fri Nov 24 2017 - 12:17:24 AM CDT	
-            # to =   11:45:00 Aug 13, 2008 CDT
 
-            ft = '%s %s %s, %s %s' % (parts[4], parts[1], parts[2], parts[3], parts[6])
-            #print ft
-            # parse as the CDT timezone
-            t = dateutil.parser.parse(ft, tzinfos=TZINFOS)
-            #pp.pprint(t)
-            # utc the time
-            utc = t.astimezone(pytz.utc)
-            #pp.pprint(utc)
-            # localtime the time
-            lt = utc.astimezone(to_zone)
-            #pp.pprint(lt)
-            # unixtime the time
-            unixtime = time.mktime(lt.timetuple())
+            unixtime, utc = timetools.parseTimestamp(record['bidtime'])
             record['bidtime'] = unixtime
-            #pp.pprint(unixtime)
+            record['utc'] = time.mktime(utc.timetuple())
 
             record['price'] = record['price'].rstrip()
             record['price'] = record['price'].replace('$', '')
@@ -84,5 +61,6 @@ for line in content.split('\n'):
 
    if 'Reserve price not yet met' in line:
       details['reserve'] = 'notmet'
+
 print json.dumps(details)
 
