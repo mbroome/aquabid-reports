@@ -27,7 +27,7 @@ for line in content.split('\n'):
                 'pic': '',
                 'seller': '',
                 'closes': '',
-                'bid': '',
+                'bids': '',
                 'price': '',
                 'reserve': '',
                 'shipping': '',
@@ -46,7 +46,7 @@ for line in content.split('\n'):
             record['pic'] = m.group(3)
             record['seller'] = m.group(4)
             record['closes'] = m.group(5)
-            record['bid'] = m.group(6)
+            record['bids'] = m.group(6)
             record['price'] = m.group(7)
             record['reserve'] = m.group(8)
          else:
@@ -60,7 +60,7 @@ for line in content.split('\n'):
                   record['item'] = i.group(2)
                   record['seller'] = i.group(3)
                   record['closes'] = i.group(4)
-                  record['bid'] = i.group(5)
+                  record['bids'] = i.group(5)
                   record['price'] = i.group(6)
                   record['reserve'] = i.group(7)
 
@@ -71,12 +71,13 @@ for line in content.split('\n'):
          if record['item']:
             # sanatize the data since it's all over the place
             id = record['link'][record['link'].find('?') + 1:]
+            id = id[id.find('&') + 1:]
             record['id'] = id
 
-            if 'buyitnow' in record['bid']:
-               record['bid'] = 'buyitnow'
-            elif 'No Bids' in record['bid']:
-               record['bid'] = '0'
+            if 'buyitnow' in record['bids']:
+               record['bids'] = 'buyitnow'
+            elif 'No Bids' in record['bids']:
+               record['bids'] = '0'
 
             picData = record['pic']
             if '/us.gif' in picData:
