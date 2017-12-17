@@ -52,6 +52,7 @@ for line in lines:
                    'reserve': m.group(7),
                   }
 
+         record['lastpolled'] = time.time()
          record['price'] = record['price'].rstrip()
          record['price'] = record['price'].replace('$', '')
          try:

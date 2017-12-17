@@ -47,6 +47,7 @@ for line in content.split('\n'):
 
             record['price'] = record['price'].rstrip()
             record['price'] = record['price'].replace('$', '')
+            record['lastpolled'] = time.time()
 
             #pp.pprint(record)
             details['bids'].append(record)

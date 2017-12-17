@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import logging
+import time
 
 import elasticsearch
 import elasticsearch.helpers
@@ -16,6 +17,10 @@ pp = pprint.PrettyPrinter(indent=4)
 import urllib3
 urllib3.disable_warnings()
 
+indexName = 'auctions'
+docType = 'auction'
+
+
 es = elasticsearch.Elasticsearch(['https://ro569ymesw:zvy11q9ajr@first-cluster-2318734906.us-east-1.bonsaisearch.net:443'], use_ssl=True, ca_certs=certifi.where())
 
 #pp.pprint(es)
@@ -25,20 +30,22 @@ def set_data(inputFile, indexName, docType):
    data = json.loads(content)
 
    for rec in data:
+      doc = rec.copy()
+      doc['lastupdate'] = time.time()
       #pp.pprint(rec)
       id = '%s_%s' % (rec['category'], rec['id'])
       yield {'_index': indexName,
-             '_type': 'auction',
+             '_type': docType,
              '_id': id,
              '_op_type': 'update',
-             '_source': {'doc': rec, 'upsert': {'doc': rec}}
+             'doc': doc,
+             'doc_as_upsert': True,
+             #'_source': {'doc': doc, 'upsert': {'doc': doc}}
             }
 
 indexData = es.indices.stats('_all')
 pp.pprint(indexData)
 
-indexName = 'auctions'
-docType = 'auctions'
 if not es.indices.exists(indexName):
    request_body = {
        "settings" : {

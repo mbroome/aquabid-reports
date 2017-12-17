@@ -87,6 +87,9 @@ for line in content.split('\n'):
             record['utc'] = time.mktime(utc.timetuple())
             record['id'] = unixtime
             record['category'] = category
+            record['lastpolled'] = time.time()
+            record['closed'] = {}
+            record['details'] = {}
 
             if 'buyitnow' in record['bids']:
                record['bids'] = 'buyitnow'
