@@ -4,6 +4,7 @@ import sys
 import re
 import json
 import time
+import requests
 
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 sys.path.append(scriptPath + '/../lib')
@@ -13,55 +14,103 @@ import timetools
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-rowPattern = re.compile('.*auction\.cgi.*?>(.*?)<\/a.*?<td.*?<td.*?font.*?>(.*?)<\/font.*?<td.*?<td.*?font.*?>(.*?)<\/font.*<td>.*?>(.*?)<\/font.*')
+patternMap = {
+   'closed': {
+      # <td width="13%"><font size="2">Started</font></td><td width="31%"><font size="2">Nov 19 2017 - 08:10:13 AM</font></td><td width="1%"></td><td width="10%"><font size="2">Location</font></td><td width="45%"><font size="2">thailand Kanchanaburi 71260 Thailand</font></td>
+      'loc': re.compile('.*>Location.*font .*?>(.*?)</font', re.IGNORECASE),
 
-content = open('details.html', 'r').read()
+      # <td width="13%"><font size="2">Seller</font></td></font><td width="31%" colspan="4"><font size="2"><a href="https://www.aquabid.com/cgi-bin/auction/auction.cgi?askaq&Ake_betta">Ake_betta</a> (<a href="https://www.aquabid.com/cgi-bin/auction/vfb.cgi?&&vfb&Ake_betta">476/493</a>) <img src="https://www.aquabid.com/images/yellow.gif" alt="101-500" border="0"></a></font></td>
+      'seller': re.compile('.*?>Seller.*auction.cgi.*?>(.*?)<.*', re.IGNORECASE),
+   },
+   'active': {
+      # <td height="19" width="75"><font FACE="Arial" size="2">Location</font></td><td height="19" width="294"><font FACE="Arial" size="2"><a href="https://www.google.com/maps?q=Youngstown+OH+44515+United+States&hl=en" target=_new><IMG align="top" SRC="https://www.aquabid.com/images/icons/mapit.gif" border="0 alt=" Map "> Youngstown OH 44515 United States</a></font></td><td height="19" width="17">&nbsp;</td><td height="19" width="374" colspan="2"><font FACE="Arial" size="2"><a href="https://www.aquabid.com/cgi-bin/auction/vfb.cgi?1&1&vfb&Bds826"><img src="https://www.aquabid.com/images/icon_feedback.gif" border="0"> (View Seller's Feedback)</a> </font></td>
+      'loc': re.compile('.*>Location.*font .*<img.*>(.*?)</a.*<a', re.IGNORECASE),
 
-details = {
-           'description': '',
-           'category': '',
-           'reserve': '',
-           'bids': []
-          }
+      # <td height="16" width="75"></td><td height="16" width="294"></td><td height="16" width="17"></td><td height="16"></td><td height="16" width="187"></td></tr></font><tr><td height="19" width="75"><font FACE="Arial" size="2">Seller</font></td><td height="19" width="294"><font FACE="Arial" size="2"><a href="https://www.aquabid.com/cgi-bin/auction/vfb.cgi?&&vfb&Bds826">Bds826</a> (<a href="https://www.aquabid.com/cgi-bin/auction/vfb.cgi?&&vfb&Bds826">158/158</a>) <img src="https://www.aquabid.com/images/yellow.gif" alt="101-500" border="0"></a></font></td><td height="19" width="17">&nbsp;</td><td height="19" width="374" colspan="2"><font FACE="Arial" size="2"><img src="https://www.aquabid.com/images/icon_mag.gif" border="0"> (View <a href=/cgi-bin/auction/auction.cgi?disp&viewseller&Bds826>All Seller's Auctions</a> or <a href=/cgi-bin/auction/auction.cgi?disp&viewseller&Bds826&&fwbettas>This Category</a>)</a></font></td>
+      'seller': re.compile('.*?>Seller.*?vfb.cgi.*?>(.*?)</a.*', re.IGNORECASE),
+   }
+}
 
-for line in content.split('\n'):
-   if 'Bidders' in line:
-      #print line
+descPattern = re.compile('.*blockquote>(.*?)</blockquote', re.IGNORECASE)
 
-      table = line.split('</tr><tr')
-      #pp.pprint(table)
-      for row in table:
-         #pp.pprint(row)
-         m = rowPattern.match(row)
-         if m:
-            record = {
-                      'bidder': m.group(1),
-                      'bidtime': m.group(2),
-                      'price': m.group(3),
-                      'comment': m.group(4)
-                     }
+# closed example
+category = 'books'
+id = 1592530201
 
-            unixtime, utc = timetools.parseTimestamp(record['bidtime'])
-            record['bidtime'] = unixtime
-            record['utc'] = time.mktime(utc.timetuple())
+# open example
+#category = 'fwbettas'
+#id = 1592971203
 
-            record['price'] = record['price'].rstrip()
-            record['price'] = record['price'].replace('$', '')
-            record['lastpolled'] = time.time()
+activeUrl = 'https://www.aquabid.com/cgi-bin/auction/auction.cgi?%s&%s' % (category, id)
+closedUrl = 'https://www.aquabid.com/cgi-bin/auction/closed.cgi?view_closed_item&%s%s' % (category, id)
 
-            #pp.pprint(record)
-            details['bids'].append(record)
+#url = 'https://www.aquabid.com/cgi-bin/auction/auction.cgi?books&1592530201'
 
-   if 'HIDDEN' in line:
-      value = line[line.find('value="') + 7:]
-      value = value[:value.find('"')]
-      if 'ITEM' in line:
-         details['description'] = value
-      elif 'CATEGORY' in line:
-         details['category'] = value
 
-   if 'Reserve price not yet met' in line:
-      details['reserve'] = 'notmet'
+r = requests.get(activeUrl)
+if r.text.lower().find('this item has closed') > 0:
+   r = requests.get(closedUrl)
+#   print '### closed'
+#else:
+#   print '### not closed'
 
-print json.dumps(details)
+content = r.text
+#print r.text
+
+#sys.exit(0)
+
+
+#content = open('details.html', 'r').read()
+
+details = content
+details = details.replace('\n', '')
+
+recordType = 'closed'
+if 'Current Auction Time' in content:
+   content = content[content.find('Current Auction Time'):]
+else:
+   recordType = 'active'
+   content = content[content.find('tracking.cgi'):]
+   content = content[content.lower().find('<table')+6:]
+
+content = content[content.lower().find('<tr>'):]
+content = content[:content.lower().find('</table>')]
+content = content.replace('\n', '')
+
+#print content
+
+lines = re.split('<\/tr><tr>', content, flags=re.IGNORECASE)
+
+#print lines
+record = {
+   'seller': '',
+   'location': '',
+   'details': '',
+   'recordType': recordType,
+}
+
+#print recordType
+
+for line in lines:
+   #print '###'
+   #print line
+   m = patternMap[recordType]['loc'].match(line)
+   if m:
+      #print m.group(1)
+      record['location'] = str(m.group(1).lower().lstrip().rstrip())
+   else:
+      m = patternMap[recordType]['seller'].match(line)
+      if m:
+         #print m.group(1)
+         record['seller'] = str(m.group(1).lower().lstrip().rstrip())
+
+   #print ''
+
+
+m = descPattern.match(details)
+if m:
+    record['details'] = str(m.group(1))
+
+pp.pprint(record)
+
 
