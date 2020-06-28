@@ -25,7 +25,7 @@ r = requests.get(url)
 
 #sys.exit(0)
 
-countryList = {}
+countryList = []
 
 content = r.text
 content = content[content.lower().find('option name=sellerloc'):]
@@ -39,8 +39,8 @@ for line in content.split('\n'):
       country = country[country.find(' '):]
    country = country.lstrip().rstrip()
 
-   if country != 'All Countries':
-      countryList[country] = country
+   if country and country != 'All Countries':
+      countryList.append(country)
 
 print(json.dumps(countryList))
 

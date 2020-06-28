@@ -6,6 +6,8 @@ import json
 import time
 import requests
 
+import mysql.connector
+
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 sys.path.append(scriptPath + '/../lib')
 
@@ -119,5 +121,33 @@ if m:
     record['details'] = m.group(1).encode('utf-8').strip()
 
 print(json.dumps(record))
+
+
+cnx = mysql.connector.connect(user='abreports', password='abpass',
+                              host='localhost',
+                              database='abreports')
+
+cursor = cnx.cursor()
+
+data = open('etc/locations.json', 'r').read()
+locations = json.loads(data)
+
+query = 'INSERT IGNORE INTO sellers (user, location, country) VALUES (%s,%s,%s)'
+
+for loc in locations:
+   if record['location'].endswith(loc.lower().encode('utf-8').strip()):
+      data = (
+         record['seller'],
+         record['location'],
+         loc
+      )
+
+      cursor.execute(query, data)
+
+cnx.commit()
+
+cursor.close()
+
+cnx.close()
 
 
