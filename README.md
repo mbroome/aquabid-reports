@@ -1,12 +1,9 @@
- Need phantomjs to scrape aquabid.
+# Scrap aquabid for auction data since it doesn't provide an api of any kind.
+
 
 ```shell
-phantomjs  lib/pollers/active-auctions.js >active.html
 bin/active.py > active.json
-```
-
-```shell
-phantomjs  lib/pollers/closed-auctions.js >closed.html
 bin/closed.py > closed.json
+bin/details.py > details.json
 ```
 
