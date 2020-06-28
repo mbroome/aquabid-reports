@@ -2,7 +2,7 @@ USE abreports;
 
 create table sellers (
    user varchar(30) not null,
-   location varchar(50) not null,
+   location varchar(70) not null,
    country varchar(50),
    primary key(user)
 );

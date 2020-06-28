@@ -105,5 +105,3 @@ class Parser():
       
       cursor.close()
       
-      #dbconn.context.close()
-      

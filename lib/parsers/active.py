@@ -7,6 +7,7 @@ import time
 import requests
       
 import dbconn
+import parsers.details
       
 import timetools
       
@@ -15,6 +16,8 @@ pp = pprint.PrettyPrinter(indent=4)
       
 class Parser():
    def get(self):
+      detailParser = parsers.details.Parser()
+
       # <TR bgcolor=#C0C0C0><TD colspan=6><font size=2 face=Arial>&nbsp;&nbsp;<B>Air Pumps</B></TD></TR>
       titlePattern = re.compile('<tr .*<b>(.*)<\/b.*tr>', re.IGNORECASE)
       
@@ -149,7 +152,7 @@ class Parser():
                 "(id, category, section, link, description, pic, seller, closes, bids, price, reserve, shipping)"
                 "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)")
       
-      print(query)
+      #print(query)
       cursor = dbconn.context.cursor()
       
       for record in activeList:
@@ -176,6 +179,12 @@ class Parser():
       dbconn.context.commit()
       
       cursor.close()
+
+      #pp.pprint(activeList[609])
+      #detailParser.get(activeList[609]['id'], activeList[609]['category'], activeList[609]['seller'])
       
-      #dbconn.context.close()
-      
+      for record in activeList:
+         found = detailParser.get(record['id'], record['category'], record['seller'])
+         if not found:
+            time.sleep(4)
+
