@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import os
 import sys
 import re
 import json
 import time
 import requests
+
+import mysql.connector
 
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 sys.path.append(scriptPath + '/../lib')
@@ -114,11 +118,11 @@ for line in content.split('\n'):
             record['id'] = unixtime
             record['category'] = category
             record['lastpolled'] = time.time()
-            record['closed'] = {}
-            record['details'] = {}
+            #record['closed'] = {}
+            #record['details'] = {}
 
             if 'buyitnow' in record['bids']:
-               record['bids'] = 'buyitnow'
+               record['bids'] = '-1'
             elif 'No Bids' in record['bids']:
                record['bids'] = '0'
 
@@ -151,15 +155,82 @@ for line in content.split('\n'):
 
          
             #pp.pprint(record)
-            activeList.append(record)
-            try:
-               bidCount = int(record['bids'])
-               #print bidCount
-               if bidCount > 0:
-                  bidList.append(record)
-            except:
-               pass
+            if record['seller']:
+               activeList.append(record)
          
 
-print json.dumps(activeList)
-#print json.dumps(bidList)
+#print json.dumps(activeList)
+
+
+
+cnx = mysql.connector.connect(user='abreports', password='abpass',
+                              host='localhost',
+                              database='abreports')
+
+'''
+| id          | varchar(15)  | NO   | PRI | NULL    |       |
+| category    | varchar(30)  | NO   | PRI | NULL    |       |
+| section     | varchar(30)  | NO   | PRI | NULL    |       |
+| link        | varchar(100) | NO   |     | NULL    |       |
+| description | varchar(100) | NO   |     | NULL    |       |
+| pic         | tinyint(1)   | NO   |     | 0       |       |
+| seller      | varchar(30)  | NO   |     | NULL    |       |
+| closes      | varchar(10)  | YES  |     | NULL    |       |
+| bids        | int(11)      | YES  |     | NULL    |       |
+| price       | float        | YES  |     | NULL    |       |
+| reserve     | varchar(5)   | YES  |     | NULL    |       |
+| shipping    | varchar(10)  | YES  |     | NULL    |       |
+| details     | text         | YES  |     | NULL    |       |
+'''
+'''{
+    'bids': 'buyitnow',
+    'category': u'airpumps',
+    'closes': u'6/28',
+    'description': u'12 AIR STONES-TOP QUALITY-BARGAIN PRICE!!',
+    'id': 1593391202,
+    'lastpolled': 1593351428.361803,
+    'link': u'https://www.aquabid.com/cgi-bin/auction/auction.cgi?airpumps&1593391202',
+    'pic': True,
+    'price': 4.0,
+    'reserve': u'none',
+    'section': u'Air Pumps',
+    'seller': u'Buyguy52',
+    'shipping': 'us',
+    'utc': 1593409202.0}
+
+'''
+
+query = ("INSERT IGNORE INTO auctions "
+          "(id, category, section, link, description, pic, seller, closes, bids, price, reserve, shipping)"
+          "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)")
+
+print(query)
+cursor = cnx.cursor()
+
+for record in activeList:
+   #pp.pprint(record)
+
+   data = (
+      record['id'], 
+      record['category'],
+      record['section'], 
+      record['link'], 
+      record['description'], 
+      record['pic'], 
+      record['seller'], 
+      record['closes'], 
+      record['bids'], 
+      record['price'], 
+      record['reserve'], 
+      record['shipping']
+   )
+
+   #cursor.execute(query, record)
+   cursor.execute(query, data)
+
+cnx.commit()
+
+cursor.close()
+
+cnx.close()
+

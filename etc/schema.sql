@@ -1,14 +1,16 @@
 USE abreports;
 
-create table users (
+create table sellers (
    user varchar(30) not null,
    location varchar(50) not null,
+   country varchar(50),
    primary key(user)
 );
 
 create table auctions (
-   id varchar(15) not null,
-   section varchar(30) not null,
+   id int not null,
+   category varchar(30) not null,
+   section varchar(50) not null,
    link varchar(100) not null,
    description varchar(100) not null,
    pic bool not null default 0,
@@ -18,7 +20,9 @@ create table auctions (
    price float,
    reserve varchar(5),
    shipping varchar(10),
+   closed bool not null default 0,
+   winner varchar(30),
    details text,
-   primary key(id, section)
+   primary key(id, category)
 );
 

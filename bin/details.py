@@ -14,6 +14,7 @@ import timetools
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
+
 patternMap = {
    'closed': {
       # <td width="13%"><font size="2">Started</font></td><td width="31%"><font size="2">Nov 19 2017 - 08:10:13 AM</font></td><td width="1%"></td><td width="10%"><font size="2">Location</font></td><td width="45%"><font size="2">thailand Kanchanaburi 71260 Thailand</font></td>
@@ -41,6 +42,12 @@ id = 1592530201
 #category = 'fwbettas'
 #id = 1592971203
 
+id = 1593355809
+category = 'fwbettashm'
+
+id = 1594649345
+category = 'fwkillifish'
+
 activeUrl = 'https://www.aquabid.com/cgi-bin/auction/auction.cgi?%s&%s' % (category, id)
 closedUrl = 'https://www.aquabid.com/cgi-bin/auction/closed.cgi?view_closed_item&%s%s' % (category, id)
 
@@ -54,8 +61,8 @@ if r.text.lower().find('this item has closed') > 0:
 #else:
 #   print '### not closed'
 
-content = r.text
-#print r.text
+content = r.text.encode('utf-8').strip()
+#print(content)
 
 #sys.exit(0)
 
@@ -71,10 +78,10 @@ if 'Current Auction Time' in content:
 else:
    recordType = 'active'
    content = content[content.find('tracking.cgi'):]
-   content = content[content.lower().find('<table')+6:]
+   #content = content[content.lower().find('<table')+6:]
 
+#print content
 content = content[content.lower().find('<tr>'):]
-content = content[:content.lower().find('</table>')]
 content = content.replace('\n', '')
 
 #print content
@@ -97,20 +104,20 @@ for line in lines:
    m = patternMap[recordType]['loc'].match(line)
    if m:
       #print m.group(1)
-      record['location'] = str(m.group(1).lower().lstrip().rstrip())
+      record['location'] = m.group(1).lower().lstrip().rstrip().encode('utf-8').strip()
    else:
       m = patternMap[recordType]['seller'].match(line)
       if m:
          #print m.group(1)
-         record['seller'] = str(m.group(1).lower().lstrip().rstrip())
+         record['seller'] = m.group(1).lower().lstrip().rstrip().encode('utf-8').strip()
 
    #print ''
 
 
 m = descPattern.match(details)
 if m:
-    record['details'] = str(m.group(1))
+    record['details'] = m.group(1).encode('utf-8').strip()
 
-pp.pprint(record)
+print(json.dumps(record))
 
 

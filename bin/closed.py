@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import os
 import sys
 import re
 import json
 import time
 import requests
+
+import mysql.connector
 
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 sys.path.append(scriptPath + '/../lib')
@@ -83,5 +87,44 @@ for line in lines:
       #pp.pprint(record)
       closedList.append(record)
 
-print json.dumps(closedList)
+#print(json.dumps(closedList))
+
+cnx = mysql.connector.connect(user='abreports', password='abpass',
+                              host='localhost',
+                              database='abreports')
+
+'''
+{   'category': u'waterc',
+    'closes': u'7/2',
+    'description': u'50 Indian Almond Leaves-Free Shipping',
+    'id': 1593734838,
+    'lastpolled': 1593353530.927984,
+    'link': u'https://www.aquabid.com/cgi-bin/auction/closed.cgi?view_closed_item&waterc1593734838',
+    'price': 15.0,
+    'reserve': u'Yes',
+    'seller': u'Warriorspirit',
+    'utc': 1593752838.0,
+    'winner': u'Cfs'}
+'''
+
+query = "UPDATE auctions set winner = %s, closed = true where id = %s and category = %s"
+
+cursor = cnx.cursor()
+
+for record in closedList:
+   #pp.pprint(record)
+
+   data = (
+      record['winner'],
+      record['id'],
+      record['category']
+   )
+
+   cursor.execute(query, data)
+
+cnx.commit()
+
+cursor.close()
+
+cnx.close()
 
