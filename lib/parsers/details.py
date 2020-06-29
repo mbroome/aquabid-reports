@@ -109,12 +109,15 @@ class Parser():
          m = patternMap[recordType]['loc'].match(line)
          if m:
             print '#### match: ', m.group(1)
-            record['location'] = m.group(1).lower().lstrip().rstrip().encode('utf-8').strip()
+            l = m.group(1)
+            l = re.sub(r'[^\w]', '', l)
+            #l = l.replace('\xc3', '')
+            record['location'] = l.encode('utf-8').strip().lower().lstrip().rstrip()
          else:
             m = patternMap[recordType]['seller'].match(line)
             if m:
                #print m.group(1)
-               record['seller'] = m.group(1).lower().lstrip().rstrip().encode('utf-8').strip()
+               record['seller'] = m.group(1).encode('utf-8').strip().lower().lstrip().rstrip()
       
          #print ''
       
@@ -134,7 +137,7 @@ class Parser():
       query = 'INSERT IGNORE INTO sellers (user, location, country) VALUES (%s,%s,%s)'
       
       for loc in locations:
-         if record['location'].endswith(loc.lower().encode('utf-8').strip()):
+         if record['location'].endswith(loc.encode('utf-8').strip().lower()):
             data = (
                record['seller'],
                record['location'],
