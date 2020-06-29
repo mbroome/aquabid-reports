@@ -53,7 +53,7 @@ class Parser():
 
       if seller:
          cursor = dbconn.context.cursor()
-         seller = seller.encode('utf-8').strip()
+         seller = seller.lower().encode('utf-8').strip()
 
          print('id: ', id, ' category: ', category, ' seller: ', seller)
          query = "SELECT * from sellers where user = %s"
@@ -63,27 +63,19 @@ class Parser():
          found = cursor.rowcount
 
          cursor.close()
-         if found:
+         if found > 0:
             print('## found seller, no need for details')
             return True
       
       r = requests.get(activeUrl)
       if r.text.lower().find('this item has closed') > 0:
          r = requests.get(closedUrl)
-      #   print '### closed'
-      #else:
-      #   print '### not closed'
       
       content = r.text.encode('utf-8').strip()
       #print(content)
       
-      #sys.exit(0)
-      
-      
-      #content = open('details.html', 'r').read()
-      
-      details = content
-      details = details.replace('\n', '')
+      #details = content
+      #details = details.replace('\n', '')
       
       recordType = 'closed'
       if 'Current Auction Time' in content:
@@ -101,7 +93,7 @@ class Parser():
       
       lines = re.split('<\/tr><tr>', content, flags=re.IGNORECASE)
       
-      #print lines
+      #print(json.dumps(lines))
       record = {
          'seller': '',
          'location': '',
@@ -116,7 +108,7 @@ class Parser():
          #print line
          m = patternMap[recordType]['loc'].match(line)
          if m:
-            #print m.group(1)
+            print '#### match: ', m.group(1)
             record['location'] = m.group(1).lower().lstrip().rstrip().encode('utf-8').strip()
          else:
             m = patternMap[recordType]['seller'].match(line)
@@ -126,7 +118,7 @@ class Parser():
       
          #print ''
       
-      
+      #print(record)
       #m = descPattern.match(details)
       #if m:
       #    record['details'] = m.group(1).encode('utf-8').strip()
@@ -146,9 +138,9 @@ class Parser():
             data = (
                record['seller'],
                record['location'],
-               loc
+               loc.lower().encode('utf-8').strip()
             )
-      
+            #print(data)
             cursor.execute(query, data)
       
       dbconn.context.commit()

@@ -34,6 +34,8 @@ class Parser():
          if country and country[0] == '-':
             country = country[country.find(' '):]
          country = country.lstrip().rstrip()
+         if ',' in country:
+            country = country[:country.find(',')]
       
          if country and country != 'All Countries':
             countryList.append(country)
