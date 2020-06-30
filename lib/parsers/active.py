@@ -8,7 +8,8 @@ import requests
       
 import dbconn
 import parsers.details
-      
+import sanatizers
+     
 import timetools
       
 import pprint
@@ -34,13 +35,9 @@ class Parser():
          'searchloc': 'All'
       }
       
+      print "## Post: ", url
       r = requests.post(url, postData)
       
-      #print r.text
-      
-      #sys.exit(0)
-      
-      #content = open('active.html', 'r').read()
       content = r.text
       section = ''
       found = False
@@ -78,7 +75,7 @@ class Parser():
                   record['link'] = m.group(1)
                   record['description'] = m.group(2)
                   record['pic'] = m.group(3)
-                  record['seller'] = m.group(4)
+                  record['seller'] = sanatizers.Seller(m.group(4))
                   record['closes'] = m.group(5)
                   record['bids'] = m.group(6)
                   record['price'] = m.group(7)
@@ -95,12 +92,10 @@ class Parser():
                   record['description'] = record['description'].rstrip().lstrip()
       
                   id = record['link'][record['link'].find('?') + 1:]
-                  id = id[id.find('&') + 1:]
-                  category = record['link'][record['link'].find('?') + 1:]
-                  category = category[:category.find('&')]
       
-                  unixtime, utc = timetools.parseTimestamp(id)
-                  record['utc'] = time.mktime(utc.timetuple())
+                  unixtime, category = sanatizers.ID(id)
+                  
+                  #record['utc'] = time.mktime(utc.timetuple())
                   record['id'] = unixtime
                   record['category'] = category
                   record['lastpolled'] = time.time()
@@ -136,16 +131,10 @@ class Parser():
                   except Exception, e:
                      pass
       
-               #pp.pprint(record)
-               #print '####'
-      
-               
                   #pp.pprint(record)
                   if record['seller']:
                      activeList.append(record)
                
-      
-      #print json.dumps(activeList)
       
       
       query = ("INSERT IGNORE INTO auctions "

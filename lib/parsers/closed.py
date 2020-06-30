@@ -11,7 +11,8 @@ import mysql.connector
       
 import timetools
 import dbconn
-      
+import sanatizers
+     
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
      
@@ -28,13 +29,9 @@ class Parser():
          'category': 'all',
          'B1': 'Submit',
       }
+      print "## Post: ", url
       r = requests.post(url, postData)
       
-      #print r.text
-      
-      #sys.exit(0)
-      
-      #content = open('closed.html', 'r').read()
       content = r.text
       
       content = content[content.find('Reserve Met'):]
@@ -53,19 +50,15 @@ class Parser():
             id = m.group(2)
             id = id[id.find('?view_closed_item&') + 18:]
             #print id
-            i = re.search('\d', id)
-            if i:
-               category = id[:i.start()]
-               id = id[i.start():]
-               unixtime, utc = timetools.parseTimestamp(id)
-      
+            unixtime, category = sanatizers.ID(id)
+
             record = {
                       'id': unixtime,
                       'category': category,
-                      'utc': time.mktime(utc.timetuple()),
+                      #'utc': time.mktime(utc.timetuple()),
                       'link': m.group(2).replace('&amp;', '&'),
                       'description': m.group(3),
-                      'seller': m.group(4),
+                      'seller': sanatizers.Seller(m.group(4)),
                       'closes': m.group(1),
                       'winner': m.group(5),
                       'price': m.group(6),

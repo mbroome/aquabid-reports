@@ -10,6 +10,7 @@ import mysql.connector
       
 import dbconn
 import timetools
+import sanatizers
       
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -31,31 +32,18 @@ class Parser():
       }
       
       descPattern = re.compile('.*blockquote>(.*?)</blockquote', re.IGNORECASE)
-      
-      # closed example
-      #category = 'books'
-      #id = 1592530201
-      
-      # open example
-      #category = 'fwbettas'
-      #id = 1592971203
-      
-      #id = 1593355809
-      #category = 'fwbettashm'
-      
-      #id = 1594649345
-      #category = 'fwkillifish'
+      zipcodePattern = re.compile('\d\d\d\d\d', re.IGNORECASE)
       
       activeUrl = 'https://www.aquabid.com/cgi-bin/auction/auction.cgi?%s&%s' % (category, id)
       closedUrl = 'https://www.aquabid.com/cgi-bin/auction/closed.cgi?view_closed_item&%s%s' % (category, id)
       
-      print('time: ', time.time())
+      #print('time: ', time.time())
 
       if seller:
          cursor = dbconn.context.cursor()
-         seller = seller.lower().encode('utf-8').strip()
+         seller = sanatizers.Seller(seller)
 
-         print('id: ', id, ' category: ', category, ' seller: ', seller)
+         #print('id: ', id, ' category: ', category, ' seller: ', seller)
          query = "SELECT * from sellers where user = %s"
 
          cursor.execute(query, (seller,))
@@ -64,11 +52,13 @@ class Parser():
 
          cursor.close()
          if found > 0:
-            print('## found seller, no need for details')
+            #print('## found seller, no need for details')
             return True
       
+      print "## Get: ", activeUrl
       r = requests.get(activeUrl)
       if r.text.lower().find('this item has closed') > 0:
+         print "## Get: ", closedUrl
          r = requests.get(closedUrl)
       
       content = r.text.encode('utf-8').strip()
@@ -107,28 +97,29 @@ class Parser():
          #print '###'
          #print line
          m = patternMap[recordType]['loc'].match(line)
-         if m:
-            print '#### match: ', m.group(1)
+         if m and not record['location']:
+            #print '#### match: ', m.group(1)
             l = m.group(1)
-            l = re.sub(r'[^\w]', '', l)
-            #l = l.replace('\xc3', '')
+            #l = re.sub(r'[^\w]', '', l)
+            l = re.sub(r'[^ -~_].*', '', l)
             record['location'] = l.encode('utf-8').strip().lower().lstrip().rstrip()
          else:
             m = patternMap[recordType]['seller'].match(line)
-            if m:
+            if m and not record['seller']:
                #print m.group(1)
-               record['seller'] = m.group(1).encode('utf-8').strip().lower().lstrip().rstrip()
+               record['seller'] = sanatizers.Seller(m.group(1))
       
          #print ''
       
-      #print(record)
+      print(record)
       #m = descPattern.match(details)
       #if m:
       #    record['details'] = m.group(1).encode('utf-8').strip()
       
       #print(json.dumps(record))
       
-      
+      #sys.exit(0)
+
       cursor = dbconn.context.cursor()
       
       data = open('etc/locations.json', 'r').read()
@@ -136,6 +127,7 @@ class Parser():
       
       query = 'INSERT IGNORE INTO sellers (user, location, country) VALUES (%s,%s,%s)'
       
+      foundLocation = False
       for loc in locations:
          if record['location'].endswith(loc.encode('utf-8').strip().lower()):
             data = (
@@ -145,7 +137,26 @@ class Parser():
             )
             #print(data)
             cursor.execute(query, data)
+            foundLocation = True
+            break
       
+      # handle cases where the location is not actually a valid format...
+      if not foundLocation:
+         loc = ''
+         m = zipcodePattern.match(record['location'])
+         if m:
+            loc = 'united states'
+         else:
+            loc = record['location'].encode('utf-8').strip().lower()
+
+         data = (
+            record['seller'],
+            record['location'],
+            loc
+         )
+         cursor.execute(query, data)
+
+
       dbconn.context.commit()
       
       cursor.close()

@@ -20,6 +20,7 @@ cdtPattern = re.compile('(\w+) (\w+) (\d+) (\d+) - (\d+:\d+:\d+) (\w+) (\w+)')
 def parseTimestamp(timestamp):
    unixtime = None
    utc = None
+   #print timestamp
    # is this a funky timestamp in CDT format...
    m = cdtPattern.match(timestamp)
    if m:
