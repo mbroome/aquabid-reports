@@ -1,4 +1,4 @@
-# Scrap aquabid for auction data since it doesn't provide an api of any kind.
+# Scrape aquabid for auction data since it doesn't provide an api of any kind.
 
 
 ```shell
